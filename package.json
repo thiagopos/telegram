@@ -1,0 +1,22 @@
+{
+  "name": "telegram",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^17.2.3",
+    "jimp": "^1.6.0",
+    "jsqr": "^1.4.0",
+    "mysql2": "^3.9.7",
+    "node-telegram-bot-api": "^0.66.0",
+    "qrcode-reader": "^1.0.4",
+    "sql.js": "^1.8.0",
+    "telegraf": "^4.16.3"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --watch src --exec \"node src/index.js\""
+  }
+}
