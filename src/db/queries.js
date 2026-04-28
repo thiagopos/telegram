@@ -185,4 +185,133 @@ async function getAtestadoByCodigo(codigo_uuid) {
   }
 }
 
-export { getRelatorio, getPSAdmissoes, buscarSolicitacao, getAtestadoByCodigo };
+async function getAmbulatorioHoje() {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        COALESCE(
+          (SELECT le.desc_especialidade FROM lista_especialidade le
+           WHERE le.cod_sigla1 = a.desc_especialidade
+              OR le.cod_sigla2 = a.desc_especialidade
+              OR le.cod_sigla3 = a.desc_especialidade
+           LIMIT 1),
+          a.desc_especialidade
+        ) AS desc_especialidade,
+        COUNT(*) AS total
+      FROM cad_ambulatorio a
+      WHERE DATE(a.dt_consulta) = CURDATE()
+      GROUP BY 1
+      ORDER BY total DESC`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Erro em getAmbulatorioHoje()', error);
+    return null;
+  }
+}
+
+async function getEmergenciais4h() {
+  try {
+    const [[porGravidade], [porEspecialidade]] = await Promise.all([
+      db.query(
+        `SELECT
+          gravidade,
+          COUNT(*) AS total,
+          SUM(CASE WHEN status IN ('AGUARDANDO','ATENDIMENTO') THEN 1 ELSE 0 END) AS em_atendimento,
+          SUM(CASE WHEN status = 'ATENDIDO' THEN 1 ELSE 0 END) AS atendidos
+        FROM cad_atendimento
+        WHERE dt_admissao >= NOW() - INTERVAL 4 HOUR
+        GROUP BY gravidade
+        ORDER BY FIELD(gravidade,
+          'EMERGENCIA','MUITO URGENTE','URGENTE',
+          'POUCO URGENTE','NAO URGENTE','BRANCO')`
+      ),
+      db.query(
+        `SELECT
+          COALESCE(
+            (SELECT le.desc_especialidade FROM lista_especialidade le
+             WHERE le.cod_sigla1 = a.desc_especialidade
+                OR le.cod_sigla2 = a.desc_especialidade
+                OR le.cod_sigla3 = a.desc_especialidade
+             LIMIT 1),
+            a.desc_especialidade
+          ) AS desc_especialidade,
+          COUNT(*) AS total
+        FROM cad_atendimento a
+        WHERE a.dt_admissao >= NOW() - INTERVAL 4 HOUR
+        GROUP BY 1
+        ORDER BY total DESC
+        LIMIT 5`
+      ),
+    ]);
+    return { porGravidade, porEspecialidade };
+  } catch (error) {
+    console.error('Erro em getEmergenciais4h()', error);
+    return null;
+  }
+}
+
+async function getUltimaAtualizacao() {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        'Ambulatório' AS origem,
+        MAX(dt_atualizacao) AS ultima_atualizacao
+      FROM cad_ambulatorio
+      UNION ALL
+      SELECT
+        'Atendimento PS',
+        MAX(dt_atualizacao)
+      FROM cad_atendimento
+      UNION ALL
+      SELECT
+        'Internados',
+        MAX(dt_atualizacao)
+      FROM cad_paciente
+      ORDER BY ultima_atualizacao DESC`
+    );
+    return rows;
+  } catch (error) {
+    console.error('Erro em getUltimaAtualizacao()', error);
+    return null;
+  }
+}
+
+async function buscarSolicitacaoPorId(id) {
+  try {
+    const sql = `
+    SELECT
+      A.codigo_uuid,
+      A.tipo_solicitacao,
+      DATE_FORMAT(A.dt_cadastro, '%d/%m/%Y %H:%i') AS dt_cadastro,
+      A.desc_clinica,
+      A.desc_leito,
+      C.nome_completo AS solicitado_por,
+      C.doc_cpf AS solicitado_doc,
+      F.doc_rh AS paciente_doc_rh,
+      F.nome_completo AS paciente_nome_completo
+    FROM simeon_ps_solicitacao_validacao A
+      LEFT JOIN simeon_ps_solicitacao_sadt B ON B.codigo_uuid = A.codigo_uuid
+      LEFT JOIN cad_usuario C ON C.id_usuario = A.id_usuario
+      LEFT JOIN cad_paciente F ON F.id_paciente = A.id_paciente
+    WHERE A.id_validacao = ?
+    LIMIT 1`;
+
+    const [resultado] = await db.query(sql, [id]);
+    return resultado && resultado.length > 0 ? resultado[0] : null;
+  } catch (error) {
+    console.error('Erro em buscarSolicitacaoPorId():', error);
+    return null;
+  }
+}
+
+export {
+  getRelatorio,
+  getPSAdmissoes,
+  buscarSolicitacao,
+  getAtestadoByCodigo,
+  getAmbulatorioHoje,
+  getEmergenciais4h,
+  getUltimaAtualizacao,
+  buscarSolicitacaoPorId,
+};
