@@ -122,6 +122,10 @@ bot.on('message', async (ctx) => {
             // Montagem condicional: só adiciona campos quando existirem
             const parts = [];
             if (dados.tipo_solicitacao) parts.push(`<strong>🧾${dados.tipo_solicitacao}</strong>`);
+            if (dados.desc_status) {
+              const statusIcon = dados.desc_status === 'CANCELADA' ? '🔴' : '🟢';
+              parts.push(`<strong>${statusIcon} Status:</strong> ${dados.desc_status}`);
+            }
             if (dados.paciente_doc_rh) parts.push(`<strong>🆔 RH:</strong> ${dados.paciente_doc_rh}`);
             if (dados.paciente_nome_completo) parts.push(`<strong>👤 Paciente:</strong> ${dados.paciente_nome_completo}`);
 
@@ -191,6 +195,10 @@ bot.on('message', async (ctx) => {
         const isAtestado = dados.tipo_solicitacao.toUpperCase() === 'ATESTADO MÉDICO';
         const parts = [];
         if (dados.tipo_solicitacao) parts.push(`<strong>🧾 ${dados.tipo_solicitacao}</strong>`);
+        if (dados.desc_status) {
+          const statusIcon = dados.desc_status === 'CANCELADA' ? '🔴' : '🟢';
+          parts.push(`<strong>${statusIcon} Status:</strong> ${dados.desc_status}`);
+        }
         if (dados.paciente_doc_rh) parts.push(`<strong>🆔 RH:</strong> ${dados.paciente_doc_rh}`);
         if (dados.paciente_nome_completo) parts.push(`<strong>👤 Paciente:</strong> ${dados.paciente_nome_completo}`);
         if (!isAtestado && (dados.desc_clinica || dados.desc_leito)) {

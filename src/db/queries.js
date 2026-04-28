@@ -146,14 +146,15 @@ async function buscarSolicitacao(codigo_uuid) {
   try {
     const sql = `
     SELECT 
-      A.tipo_solicitacao,                                      -- Tipo da solicitação
-      DATE_FORMAT(A.dt_cadastro, '%d/%m/%Y %H:%i') AS dt_cadastro,  -- Data da solicitação    
-      A.desc_clinica,                                          -- Clínica/setor do paciente
-      A.desc_leito,                                            -- Leito do paciente
-      C.nome_completo AS solicitado_por,                       -- Nome de quem solicitou
-      C.doc_cpf AS solicitado_doc,                             -- CPF do solicitante (ajustado para nova estrutura de cad_usuario)
-      F.doc_rh AS paciente_doc_rh,                             -- RH do paciente
-      F.nome_completo AS paciente_nome_completo                -- Nome completo do paciente
+      A.tipo_solicitacao,
+      A.desc_status,
+      DATE_FORMAT(A.dt_cadastro, '%d/%m/%Y %H:%i') AS dt_cadastro,
+      A.desc_clinica,
+      A.desc_leito,
+      C.nome_completo AS solicitado_por,
+      C.doc_cpf AS solicitado_doc,
+      F.doc_rh AS paciente_doc_rh,
+      F.nome_completo AS paciente_nome_completo
     FROM simeon_ps_solicitacao_validacao A
       LEFT JOIN simeon_ps_solicitacao_sadt B ON B.codigo_uuid = A.codigo_uuid
       LEFT JOIN cad_usuario C ON C.id_usuario = A.id_usuario
@@ -283,6 +284,7 @@ async function buscarSolicitacaoPorId(id) {
     SELECT
       A.codigo_uuid,
       A.tipo_solicitacao,
+      A.desc_status,
       DATE_FORMAT(A.dt_cadastro, '%d/%m/%Y %H:%i') AS dt_cadastro,
       A.desc_clinica,
       A.desc_leito,
