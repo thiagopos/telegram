@@ -6,6 +6,7 @@ Lightweight Telegram bot that reads QR codes from images, validates them against
 - Read QR codes from user-sent images and lookup records in the local database
 - Special handling for medical certificates (atestado) with extra fields
 - Two summary reports available from the keyboard menu: "Relatório Geral" and "Relatório PS"
+- CID-10 search: count hospitalized patients (dt_saida IS NULL) and total records by CID (2026 onwards; narrows to last 3 months when too many records), with optional CSV export of all matching patients (cod_cid, doc_rh, dt_entrada, especialidade, clínica, idade, sexo)
 - Simple logging middleware and error handling
 
 ## Project structure

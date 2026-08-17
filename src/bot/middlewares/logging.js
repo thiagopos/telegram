@@ -19,6 +19,7 @@ export default async function loggingMiddleware(ctx, next) {
       '🔢 Buscar por ID',
       'ℹ️ Status Dados',
       '🖥️ Diagnóstico SGHX',
+      '🩺 Buscar CID',
     ];
     if (text && menuOptions.includes(text) && from && from.id) {
       insertAction(from.id, text);

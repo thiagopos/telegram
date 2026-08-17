@@ -307,6 +307,58 @@ async function buscarSolicitacaoPorId(id) {
   }
 }
 
+// Data inicial do filtro "2026 para frente" aplicado nas buscas por CID
+export const CID_DATA_INICIO = '2026-01-01';
+
+// Estatísticas por CID: internados (dt_saida NULL) e total de registros no banco
+async function getCidStats(cids, dataInicio = CID_DATA_INICIO) {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        cod_cid,
+        COUNT(*) AS total_registros,
+        COUNT(DISTINCT doc_rh) AS total_pacientes,
+        SUM(CASE WHEN dt_saida IS NULL THEN 1 ELSE 0 END) AS internados
+      FROM cad_internacao
+      WHERE cod_cid IN (?)
+        AND dt_entrada >= ?
+      GROUP BY cod_cid
+      ORDER BY cod_cid`,
+      [cids, dataInicio]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Erro em getCidStats():', error);
+    return null;
+  }
+}
+
+// Detalhes de TODOS os pacientes com os CIDs para exportação de arquivo
+async function getCidDetalhes(cids, dataInicio = CID_DATA_INICIO) {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        i.cod_cid,
+        i.doc_rh,
+        DATE_FORMAT(i.dt_entrada, '%d/%m/%Y %H:%i') AS dt_entrada,
+        i.desc_especialidade,
+        i.desc_clinica,
+        TIMESTAMPDIFF(YEAR, p.dt_nascimento, CURDATE()) AS idade,
+        p.sexo
+      FROM cad_internacao i
+      LEFT JOIN cad_paciente p ON p.id_paciente = i.id_paciente
+      WHERE i.cod_cid IN (?)
+        AND i.dt_entrada >= ?
+      ORDER BY i.cod_cid, i.dt_entrada DESC`,
+      [cids, dataInicio]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Erro em getCidDetalhes():', error);
+    return null;
+  }
+}
+
 export {
   getRelatorio,
   getPSAdmissoes,
@@ -316,4 +368,6 @@ export {
   getEmergenciais4h,
   getUltimaAtualizacao,
   buscarSolicitacaoPorId,
+  getCidStats,
+  getCidDetalhes,
 };
